@@ -61,6 +61,7 @@ function App() {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [showGrid, setShowGrid] = useState(true);
+  const [exposure, setExposure] = useState(100);
   const [backgroundImage, setBackgroundImage] = useState('/scene.png');
   const fileInputRef = useRef(null);
   
@@ -174,7 +175,8 @@ function App() {
             className="scene-image"
             style={{ 
               transform: `translate(${offset.x}px, ${offset.y}px) scale(${currentScale})`,
-              transition: isDragging ? 'none' : 'transform 0.4s cubic-bezier(0.2, 0, 0.2, 1)'
+              filter: `brightness(${exposure}%)`,
+              transition: isDragging ? 'none' : 'transform 0.4s cubic-bezier(0.2, 0, 0.2, 1), filter 0.2s ease'
             }}
             draggable="false"
           />
@@ -222,6 +224,24 @@ function App() {
             <div className="slider-ticks">
               <span>8mm</span>
               <span>600mm</span>
+            </div>
+          </div>
+
+          <div className="slider-section exposure-section">
+            <div className="slider-container">
+              <input 
+                type="range" 
+                min="0" 
+                max="200" 
+                value={exposure} 
+                onChange={(e) => setExposure(parseInt(e.target.value))}
+                className="focal-slider exposure-slider"
+              />
+            </div>
+            <div className="slider-ticks">
+              <span>- EV</span>
+              <span>Exposure</span>
+              <span>+ EV</span>
             </div>
           </div>
 
