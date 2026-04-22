@@ -1,14 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import './App.css'
 
-const PRESET_LENSES = [
-  { mm: 14, label: 'Ultra Wide' },
-  { mm: 24, label: 'Wide' },
-  { mm: 35, label: 'Standard' },
-  { mm: 50, label: 'Prime' },
-  { mm: 85, label: 'Portrait' },
-  { mm: 200, label: 'Tele' },
-];
 
 const BRANDS = [
   { 
@@ -17,7 +9,7 @@ const BRANDS = [
     color: '#0071e3', 
     format: '4K 60P',
     lenses: [
-      { name: '16-35mm f/2.8 GM II', min: 16, max: 35, type: 'Wide Zoom' },
+      { name: '12-24mm f/2.8 GM', min: 12, max: 24, type: 'Ultra Wide Zoom' },
       { name: '24-70mm f/2.8 GM II', min: 24, max: 70, type: 'Standard Zoom' },
       { name: '50mm f/1.2 GM', min: 50, max: 50, type: 'Prime' },
       { name: '70-200mm f/2.8 GM OSS II', min: 70, max: 200, type: 'Telephoto Zoom' },
@@ -29,7 +21,7 @@ const BRANDS = [
     color: '#ff3b30', 
     format: '8K RAW',
     lenses: [
-      { name: 'RF 15-35mm f/2.8L', min: 15, max: 35, type: 'Wide Zoom' },
+      { name: 'RF 12-24mm f/4L', min: 12, max: 24, type: 'Ultra Wide' },
       { name: 'RF 24-70mm f/2.8L', min: 24, max: 70, type: 'Standard Zoom' },
       { name: 'RF 85mm f/1.2L', min: 85, max: 85, type: 'Portrait Prime' },
       { name: 'RF 100-500mm f/4.5-7.1L', min: 100, max: 500, type: 'Super Tele' },
@@ -41,7 +33,7 @@ const BRANDS = [
     color: '#f3ce2e', 
     format: 'ProRes 422',
     lenses: [
-      { name: 'Z 14-24mm f/2.8 S', min: 14, max: 24, type: 'Ultra Wide' },
+      { name: 'Z 12-24mm f/2.8 S', min: 12, max: 24, type: 'Ultra Wide' },
       { name: 'Z 24-120mm f/4 S', min: 24, max: 120, type: 'All-around' },
       { name: 'Z 50mm f/1.2 S', min: 50, max: 50, type: 'Prime' },
       { name: 'Z 70-200mm f/2.8 VR S', min: 70, max: 200, type: 'Telephoto' },
@@ -53,7 +45,7 @@ const BRANDS = [
     color: '#ffffff', 
     format: 'Cinema DNG',
     lenses: [
-      { name: '14-24mm f/2.8 DG DN Art', min: 14, max: 24, type: 'Art Wide' },
+      { name: '12-24mm f/4 DG HSM Art', min: 12, max: 24, type: 'Art Wide' },
       { name: '24-70mm f/2.8 DG DN Art', min: 24, max: 70, type: 'Art Standard' },
       { name: '35mm f/1.2 DG DN Art', min: 35, max: 35, type: 'Art Prime' },
       { name: '150-600mm f/5-6.3 Sport', min: 150, max: 600, type: 'Sport Tele' },
@@ -69,8 +61,10 @@ function App() {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [showGrid, setShowGrid] = useState(true);
+  const [backgroundImage, setBackgroundImage] = useState('/scene.png');
+  const fileInputRef = useRef(null);
   
-  const baseFocalLength = 12; 
+  const baseFocalLength = 8; 
   const containerRef = useRef(null);
 
   const currentScale = useMemo(() => {
@@ -115,7 +109,7 @@ function App() {
       
       setFocalLength(prev => {
         const next = prev + delta;
-        return Math.min(Math.max(next, selectedLens.min), selectedLens.max);
+        return Math.min(Math.max(next, 8), 600); 
       });
     };
 
@@ -123,9 +117,18 @@ function App() {
     return () => container.removeEventListener('wheel', handleWheel);
   }, [selectedLens]);
 
-  const selectLens = (lens) => {
-    setSelectedLens(lens);
-    setFocalLength(lens.min);
+  const resetView = () => {
+    setFocalLength(8);
+    setOffset({ x: 0, y: 0 });
+  };
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setBackgroundImage(url);
+      resetView(); // Reset zoom/pan for new image
+    }
   };
 
   return (
@@ -155,21 +158,6 @@ function App() {
             ))}
           </div>
         </div>
-
-        <div className="lens-selector-panel">
-          <span className="panel-label">LENS</span>
-          <div className="lens-group">
-            {selectedBrand.lenses.map(lens => (
-              <button 
-                key={selectedBrand.name + lens.name}
-                className={`lens-item-btn ${selectedLens.name === lens.name ? 'active' : ''}`}
-                onClick={() => selectLens(lens)}
-              >
-                {lens.name}
-              </button>
-            ))}
-          </div>
-        </div>
       </div>
 
       <div 
@@ -181,7 +169,7 @@ function App() {
       >
         <div className="camera-view">
           <img 
-            src="/scene.png" 
+            src={backgroundImage} 
             alt="Camera Scene" 
             className="scene-image"
             style={{ 
@@ -207,62 +195,73 @@ function App() {
                 <div className="corner-marks" style={{ borderColor: selectedBrand.color }}></div>
              </div>
           </div>
-
-          <div className="info-bottom">
-            <div className="stats-row">
-              <div className="stat-item">
-                <span className="label">F</span>
-                <span className="value">1.4</span>
-              </div>
-              <div className="stat-item">
-                <span className="label">ISO</span>
-                <span className="value">100</span>
-              </div>
-              <div className="stat-item">
-                <span className="label">EXP</span>
-                <span className="value">-0.3</span>
-              </div>
-            </div>
-            <div className="main-display">
-              <div className="mm-info">
-                <span className="type-label">{selectedLens.type}</span>
-                <span className="lens-full-name">{selectedLens.name}</span>
-                <div className="val-group">
-                  <span className="focal-val">{focalLength}</span>
-                  <span className="unit">mm</span>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
-      <div className="side-controls">
-         <button 
-           className={`icon-btn ${showGrid ? 'active' : ''}`}
-           onClick={() => setShowGrid(!showGrid)}
-           title="Toggle Grid"
-         >
-           G
-         </button>
-      </div>
-
       <div className="controls-panel">
-        <div className="slider-section">
-          <div className="slider-container">
-            <input 
-              type="range" 
-              min={selectedLens.min} 
-              max={selectedLens.max} 
-              value={focalLength} 
-              onChange={(e) => setFocalLength(parseInt(e.target.value))}
-              className="focal-slider"
-              disabled={selectedLens.min === selectedLens.max}
-            />
+        <div className="controls-layout">
+          <div className="focal-info-display">
+            <span className="focal-label-small">Current Focal Length</span>
+            <div className="focal-value-compact">
+              <span className="focal-num">{focalLength}</span>
+              <span className="focal-unit">mm</span>
+            </div>
           </div>
-          <div className="slider-ticks">
-            <span>{selectedLens.min}mm</span>
-            <span>{selectedLens.max}mm</span>
+
+          <div className="slider-section">
+            <div className="slider-container">
+              <input 
+                type="range" 
+                min="8" 
+                max="600" 
+                value={focalLength} 
+                onChange={(e) => setFocalLength(parseInt(e.target.value))}
+                className="focal-slider"
+              />
+            </div>
+            <div className="slider-ticks">
+              <span>8mm</span>
+              <span>600mm</span>
+            </div>
+          </div>
+
+          <div className="view-controls-group">
+            <div className="control-item">
+              <button 
+                className={`icon-btn-small ${showGrid ? 'active' : ''}`}
+                onClick={() => setShowGrid(!showGrid)}
+              >
+                G
+              </button>
+              <span className="control-label">Grid</span>
+            </div>
+
+            <div className="control-item">
+              <button 
+                className="icon-btn-small"
+                onClick={resetView}
+              >
+                ⛶
+              </button>
+              <span className="control-label">Fit Image</span>
+            </div>
+
+            <div className="control-item">
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                style={{ display: 'none' }} 
+                accept="image/*"
+                onChange={handleImageUpload}
+              />
+              <button 
+                className="icon-btn-small"
+                onClick={() => fileInputRef.current.click()}
+              >
+                ↑
+              </button>
+              <span className="control-label">Upload</span>
+            </div>
           </div>
         </div>
       </div>
