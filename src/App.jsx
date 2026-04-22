@@ -4,7 +4,7 @@ import './App.css'
 
 const BRANDS = [
   { 
-    name: 'Sony', 
+    name: 'Sonyy', 
     model: 'α7R V', 
     color: '#0071e3', 
     format: '4K 60P',
